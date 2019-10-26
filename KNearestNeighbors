@@ -1,0 +1,49 @@
+require(R6)
+require(hash)
+require(mvtnorm)
+require(matrixStats)
+KNearestNeighbors <- R6Class('KNearestNeighbors',
+      list(
+        mode = NULL,
+        K = NULL,
+        P = NULL,
+        weight_function = NULL,
+        norm_function = NULL,
+        epsilon = NULL,
+        
+        reciprocal_weights = function(dists, epsilon = 1e-2) 1/(sqrt(dists) + epsilon),        
+        fit = function(X, y){
+          self$X <- X
+          self$y <- y
+        },
+         
+        regress = function(X, weight_function = reciprocal_weights){
+          N <- length(y)
+          y_hat <- numeric(N)
+          
+          for (i in seq(N)){
+            dists <- rowSums( (self$X - X[i])^2)
+            idx <- sort(dists, index.return=TRUE)$ix[1:self$K]
+            gamma <- weight_function(dists[idx], epsilon = self$epsilon)
+            y_hat[i] <- dot(self.Y[idx], gamma) / sum(gamma) # weighted average of neighbors
+          }
+          
+        },
+        classify = function(X, weight_function = reciprocal_weights, norm_function = euclidean_norm){
+            N <- length(y)
+            y_hat <- numeric(N)
+            
+            for (i in seq(N)){
+              dists <- rowSums( (self$X - X[i])^2)
+              idx <- sort(dists, index.return=TRUE)$ix[1:self$K]
+              gamma <- weight_function(dists[idx], epsilon = self$epsilon)
+              group_counts <- data.frame(y[idx], gamma*self$y[idx])
+              names(group_counts) <- c("indicator", "values")
+              max_index = which.max(tapply(group_counts$values, x$indicator, FUN=sum))
+              y_hat = y[idx][max_index]
+              
+            }
+        }
+      )
+)
+
