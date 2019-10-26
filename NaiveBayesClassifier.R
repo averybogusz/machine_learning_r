@@ -9,6 +9,7 @@ NaiveBayesClassifier <- R6Class('NaiveBayesClassifier',
     priors = hash(),
     K = NULL,
     P = NULL,
+
     fit = function(X, y, naive = 0){
       self$K <- unique(y)
 
@@ -22,15 +23,14 @@ NaiveBayesClassifier <- R6Class('NaiveBayesClassifier',
     
     },
     ## Predict definition 
-    predict = function(X){
+    predict = function(X, user_pdf = dmvnorm){
       self$P <- matrix(0, ncol = length(self$K), nrow = nrow(X))
     
        for (k in self$K) {
-          self$P[,k+1] <- dmvnorm(X, self$means[[toString(k)]], self$sigmas[[toString(k)]], log = TRUE) + log(self$priors[[toString(k)]])
+          self$P[,k+1] <- user_pdf(X, self$means[[toString(k)]], self$sigmas[[toString(k)]]) * self$priors[[toString(k)]]
        }
       return(apply(self$P, 1, which.max) - 1)
         
     }
   )
 )
- 
